@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AI Coding Mentor
 
 An interactive web-based coding mentor powered by Groq AI that provides real-time code analysis, explanations, and improvements.
@@ -62,3 +63,6 @@ ai-coding-mentor/
 │   └── .env.example
 └── package.json
 ```
+=======
+# AI-Coding-Mentor
+>>>>>>> 060613533c2b01bc22abce7344596fc5cd6be530
