@@ -1,127 +1,194 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Coding Mentor | Pro Edition</title>
-    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <title>AI Coding Mentor</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="apple-touch-icon" href="assets/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <!-- Highlight.js or Prism for AI response -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-    
-    <!-- Dependencies -->
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
 </head>
 <body>
-    <div class="app-container">
-        <!-- ... (Top Bar content) ... -->
-        <header class="top-bar">
-            <a href="/" class="logo">
-                <img src="assets/favicon.png" alt="Logo" class="logo-icon">
-                <span class="logo-text">AI Coding Mentor <span class="pro-tag">PRO</span></span>
-            </a>
-            <div class="top-controls">
-                <div class="control-group">
-                    <span class="label">LANGUAGE</span>
-                    <select id="languageSelect" class="dropdown">
-                        <option value="javascript">JavaScript</option>
-                        <option value="python">Python</option>
-                        <option value="java">Java</option>
-                        <option value="cpp">C++</option>
-                        <option value="html">HTML</option>
-                        <option value="css">CSS</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <span class="label">LEVEL</span>
-                    <select id="levelSelect" class="dropdown">
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                    </select>
-                </div>
-                <button class="ready-btn">System Ready</button>
-            </div>
-        </header>
+<div class="app-container">
 
-        <!-- Main Content -->
-        <div class="main-container">
-            <!-- Left Panel - Code Editor -->
-            <div class="panel left-panel">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        <span class="icon"></span>
-                        Source Editor
-                        <span class="badge" id="langBadge">JS</span>
-                    </div>
-                    <div class="panel-buttons">
-                        <button class="panel-btn" id="sampleBtn">Load Sample</button>
-                        <button class="panel-btn" id="clearBtn">Clear</button>
-                    </div>
+    <!-- ── Top Bar ─────────────────────────────────────── -->
+    <header class="top-bar">
+        <a href="/" class="logo" title="AI Coding Mentor Home">
+            <img src="assets/logo-horizontal.svg" alt="AI Coding Mentor" class="logo-img">
+        </a>
+
+        <div class="top-controls">
+            <select id="languageSelect" class="dropdown" title="Programming language">
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="cpp">C++</option>
+                <option value="c">C</option>
+                <option value="go">Go</option>
+                <option value="rust">Rust</option>
+                <option value="bash">Bash</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+            </select>
+            <select id="levelSelect" class="dropdown" title="Complexity level">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+            </select>
+            <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode">
+                <svg class="theme-toggle__icon" id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- ── Main Panels ─────────────────────────────────── -->
+    <div class="main-container">
+
+        <!-- Left: Editor -->
+        <div class="panel left-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    Source Editor
+                    <span class="badge" id="langBadge">JS</span>
                 </div>
-                <div class="editor-container" id="editorContainer">
-                    <div id="monaco-editor" style="width: 100%; height: 100%;"></div>
+                <div class="panel-buttons">
+                    <button class="panel-btn" id="sampleBtn" title="Load a code sample">
+                        <svg class="panel-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"/></svg>
+                        Sample
+                    </button>
+                    <button class="panel-btn" id="clearBtn" title="Clear editor and reset">
+                        <svg class="panel-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        Clear
+                    </button>
                 </div>
             </div>
+            <div class="editor-container">
+                <div id="monaco-editor"></div>
+            </div>
+        </div>
 
-            <!-- Right Panel - AI Response -->
-            <div class="panel right-panel">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        <span class="icon"></span>
-                        AI Intelligence
-                        <span class="badge-action" id="actionBadge"></span>
-                    </div>
-                    <div class="panel-buttons">
-                        <button class="panel-btn icon-only" id="saveBtn" title="Save">Save</button>
-                        <button class="panel-btn icon-only" id="copyBtn" title="Copy">Copy</button>
-                    </div>
+        <!-- Right: Output -->
+        <div class="panel right-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    AI Output
+                    <span class="badge-action" id="actionBadge"></span>
                 </div>
-                <div class="response-container">
-                    <div id="output" class="output-area markdown-body"></div>
-                    <div id="loading" class="loading-state hidden">
-                        <div class="loader">
-                            <div class="loader-inner"></div>
+                <div class="panel-buttons">
+                    <button class="panel-btn" id="saveBtn" disabled title="Save output as Markdown">
+                        <svg class="panel-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7M7 3v4a1 1 0 0 0 1 1h7"/></svg>
+                        Save
+                    </button>
+                    <button class="panel-btn" id="copyBtn" disabled title="Copy output to clipboard">
+                        <svg class="panel-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                        Copy
+                    </button>
+                </div>
+            </div>
+            <div class="response-container">
+                <!-- Intro splash -->
+                <div id="introPanel" class="intro-panel">
+                    <img src="assets/logo-vertical.svg" alt="AI Coding Mentor" class="intro-logo-img">
+                    <p class="intro-desc">Write or paste code in the editor, then pick an action to get instant AI-powered feedback.</p>
+                    <div class="intro-hints">
+                        <div class="intro-hint">
+                            <span class="intro-hint__key">Actions</span>
+                            <span class="intro-hint__label">Explain · Debug · Optimize · Refactor · Convert · Complexity · Tests</span>
                         </div>
-                        <p>Processing request...</p>
+                        <div class="intro-hint">
+                            <span class="intro-hint__key">Ctrl+Enter</span>
+                            <span class="intro-hint__label">Re-run the last action instantly</span>
+                        </div>
+                        <div class="intro-hint">
+                            <span class="intro-hint__key">Auto-detect</span>
+                            <span class="intro-hint__label">Language and level update as you type</span>
+                        </div>
+                        <div class="intro-hint">
+                            <span class="intro-hint__key">Auto-save</span>
+                            <span class="intro-hint__label">Code is persisted to localStorage</span>
+                        </div>
                     </div>
+                </div>
+                <div id="output" class="output-area markdown-body"></div>
+                <div id="loading" class="loading-state hidden">
+                    <div class="loader"><div class="loader-inner"></div></div>
+                    <p class="loading-text" id="loadingText">Analyzing...</p>
                 </div>
             </div>
         </div>
 
-        <!-- Bottom Action Bar -->
-        <div class="action-bar-wrapper">
-            <div class="convert-popup hidden" id="convertPopup">
-                <span class="convert-label">Target Language:</span>
-                <select id="convertTarget" class="convert-select">
-                    <option value="python">Python</option>
-                    <option value="javascript">JavaScript</option>
-                    <option value="java">Java</option>
-                    <option value="cpp">C++</option>
-                    <option value="c">C</option>
-                    <option value="typescript">TypeScript</option>
-                    <option value="go">Go</option>
-                    <option value="rust">Rust</option>
-                </select>
-                <button class="convert-go-btn" id="convertGoBtn">Execute Conversion</button>
-            </div>
-            <div class="action-bar">
-                <button class="action-button blue" data-action="explain">Explain</button>
-                <button class="action-button red" data-action="findBugs">Debug</button>
-                <button class="action-button yellow" data-action="improve">Optimize</button>
-                <button class="action-button teal" data-action="refactor">Refactor</button>
-                <button class="action-button orange" id="convertBtn">Convert</button>
-                <button class="action-button purple" data-action="bestPractices">Complexity</button>
-                <button class="action-button green" data-action="generateTests">Tests</button>
-            </div>
-        </div>
     </div>
 
-    <script type="module" src="js/main.js"></script>
+    <!-- ── Action Bar ──────────────────────────────────── -->
+    <div class="action-bar-wrapper">
+
+        <!-- Convert popup (floats above bar) -->
+        <div class="convert-popup hidden" id="convertPopup">
+            <span class="convert-label">Convert to:</span>
+            <select id="convertTarget" class="convert-select">
+                <option value="python">Python</option>
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="java">Java</option>
+                <option value="cpp">C++</option>
+                <option value="c">C</option>
+                <option value="go">Go</option>
+                <option value="rust">Rust</option>
+            </select>
+            <button class="convert-go-btn" id="convertGoBtn">Convert</button>
+        </div>
+
+        <!-- Left half: action buttons -->
+        <div class="action-bar">
+            <button class="action-button blue"   data-action="explain"       title="Explain what this code does">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                <span class="btn-label">Explain</span>
+            </button>
+            <button class="action-button red"    data-action="findBugs"      title="Find bugs and issues">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l1.5 1.5M15.5 3.5 17 2M12 2v3M6.5 8H4a2 2 0 0 0-2 2v1a6 6 0 0 0 6 6h8a6 6 0 0 0 6-6V10a2 2 0 0 0-2-2h-2.5M9 21v-4M15 21v-4M2 13h20"/></svg>
+                <span class="btn-label">Debug</span>
+            </button>
+            <button class="action-button yellow" data-action="improve"       title="Suggest performance improvements">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                <span class="btn-label">Optimize</span>
+            </button>
+            <button class="action-button teal"   data-action="refactor"      title="Refactor for cleaner code">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg>
+                <span class="btn-label">Refactor</span>
+            </button>
+            <button class="action-button orange" id="convertBtn"             title="Convert to another language">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+                <span class="btn-label">Convert</span>
+            </button>
+            <button class="action-button purple" data-action="bestPractices" title="Analyze complexity and best practices">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                <span class="btn-label">Complexity</span>
+            </button>
+            <button class="action-button green"  data-action="generateTests" title="Generate unit tests">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <span class="btn-label">Tests</span>
+            </button>
+        </div>
+
+        <!-- Right half: status + future placeholder -->
+        <div class="action-bar-right">
+            <div class="status-indicator" id="statusIndicator">
+                <span class="status-dot" id="statusDot"></span>
+                <span class="status-text" id="statusText">Ready</span>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -1,74 +1,105 @@
-// UI module - handles user interface updates with Markdown & Streaming support
+// UI module — output rendering, state management, streaming
 import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
 
 export function initializeUI() {
-    const output = document.getElementById('output');
-    const loading = document.getElementById('loading');
-    let currentContent = '';
+    const output      = document.getElementById('output');
+    const loading     = document.getElementById('loading');
+    const introPanel  = document.getElementById('introPanel');
+    const copyBtn     = document.getElementById('copyBtn');
+    const saveBtn     = document.getElementById('saveBtn');
 
-    // Configure marked options
-    marked.setOptions({
-        breaks: true,
-        gfm: true
-    });
+    // Single source of truth — updated on every stream chunk
+    let latestResult = '';
 
+    marked.setOptions({ breaks: true, gfm: true });
+
+    // ── Helpers ───────────────────────────────────────────
+    function setResultButtons(on) {
+        copyBtn.disabled = !on;
+        saveBtn.disabled = !on;
+    }
+
+    function addCopyButtons() {
+        output.querySelectorAll('pre').forEach(pre => {
+            if (pre.querySelector('.copy-code-btn')) return;
+            const btn = document.createElement('button');
+            btn.className   = 'copy-code-btn';
+            btn.textContent = 'Copy';
+            btn.addEventListener('click', () => {
+                const text = pre.querySelector('code')?.innerText ?? pre.innerText;
+                navigator.clipboard.writeText(text).then(() => {
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => (btn.textContent = 'Copy'), 2000);
+                });
+            });
+            pre.appendChild(btn);
+        });
+    }
+
+    function render() {
+        try {
+            output.innerHTML = marked.parse(latestResult);
+            addCopyButtons();
+            if (window.Prism) Prism.highlightAllUnder(output);
+        } catch {
+            output.textContent = latestResult;
+        }
+        // Auto-scroll to bottom
+        const rc = output.closest('.response-container');
+        if (rc) rc.scrollTop = rc.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    // Init state
+    setResultButtons(false);
+
+    // ── Public API ────────────────────────────────────────
     return {
-        showLoading: () => {
+        showLoading() {
+            latestResult = '';
+            setResultButtons(false);
             output.innerHTML = '';
-            currentContent = '';
+            introPanel.classList.add('hidden');
             loading.classList.remove('hidden');
         },
 
-        hideLoading: () => {
+        updateStream(chunk) {
             loading.classList.add('hidden');
+            latestResult += chunk;
+            render();
+            if (latestResult.trim()) setResultButtons(true);
         },
 
-        updateStream: (chunk) => {
+        showError(message) {
             loading.classList.add('hidden');
-            currentContent += chunk;
-            
-            try {
-                // Use imported marked
-                output.innerHTML = marked.parse(currentContent);
-
-                // Trigger Prism highlighting for code blocks
-                if (window.Prism) {
-                    Prism.highlightAllUnder(output);
-                }
-            } catch (e) {
-                console.error('Markdown rendering error:', e);
-                output.textContent = currentContent;
-            }
-
-            // Auto-scroll to bottom
-            const container = document.querySelector('.response-container');
-            if (container) {
-                container.scrollTop = container.scrollHeight;
-            }
-        },
-
-        showError: (message) => {
-            loading.classList.add('hidden');
+            latestResult = '';
+            setResultButtons(false);
             output.innerHTML = `
-                <div class="error-display" style="border-left: 4px solid #da3633; background: rgba(218, 54, 51, 0.1); padding: 20px; border-radius: 8px;">
-                    <div class="error-title" style="color: #fa7a7a; font-weight: 700; margin-bottom: 8px;">System Error</div>
-                    <div class="error-message" style="color: #e6edf3;">${escapeHtml(message)}</div>
-                </div>
-            `;
+                <div class="error-card">
+                    <div class="error-card__icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4M12 17h.01"/></svg>
+                    </div>
+                    <div class="error-card__body">
+                        <div class="error-card__title">Error</div>
+                        <div class="error-card__msg">${escapeHtml(message)}</div>
+                    </div>
+                </div>`;
         },
 
-        clearOutput: () => {
+        clearOutput() {
+            latestResult = '';
+            setResultButtons(false);
             output.innerHTML = '';
-            currentContent = '';
+            loading.classList.add('hidden');
+            introPanel.classList.remove('hidden');
         },
 
-        getCurrentContent: () => currentContent
+        // Used exclusively by Copy and Save
+        getLatestResult: () => latestResult,
     };
-}
-
-// Escape HTML to prevent XSS
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }

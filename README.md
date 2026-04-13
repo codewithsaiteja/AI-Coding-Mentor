@@ -1,23 +1,22 @@
-<<<<<<< HEAD
 # AI Coding Mentor
 
 An interactive web-based coding mentor powered by Groq AI that provides real-time code analysis, explanations, and improvements.
 
 ## Features
 
-- 🔍 **Explain Code** - Get detailed explanations of your code
-- 🐛 **Find Bugs** - Identify potential issues and bugs
-- ✨ **Improve Code** - Receive suggestions for code improvements
-- 📝 **Add Comments** - Generate helpful code comments
-- 🧪 **Generate Tests** - Create unit tests for your code
-- 🔄 **Refactor** - Get refactoring suggestions
-- 📚 **Best Practices** - Learn industry best practices
+- **Explain Code** — Get detailed explanations of your code
+- **Find Bugs** — Identify potential issues and bugs
+- **Optimize** — Receive suggestions for code improvements
+- **Generate Tests** — Create unit tests for your code
+- **Refactor** — Get refactoring suggestions
+- **Complexity** — Analyze code complexity and best practices
+- **Convert** — Convert code between languages
 
 ## Setup
 
 1. Install dependencies:
    ```bash
-   npm install
+   cd server && npm install
    ```
 
 2. Create a `.env` file in the `server` directory:
@@ -32,18 +31,26 @@ An interactive web-based coding mentor powered by Groq AI that provides real-tim
 
 1. Start the server:
    ```bash
+   cd server && npm start
+   ```
+   Or from the project root:
+   ```bash
    npm start
    ```
 
-2. Open `client/index.html` in your browser
+2. Open your browser at `http://localhost:3000`
 
 3. Write or paste code in the editor and click any action button
 
+## Keyboard Shortcuts
+
+- `Ctrl+Enter` — Re-run the last action
+
 ## Tech Stack
 
-- **Frontend**: Vanilla JavaScript, HTML5, CSS3
+- **Frontend**: Vanilla JavaScript (ES Modules), Monaco Editor, HTML5, CSS3
 - **Backend**: Node.js, Express
-- **AI**: Groq API (Llama models)
+- **AI**: Groq API (Llama 3.3 70B)
 
 ## Project Structure
 
@@ -52,6 +59,7 @@ ai-coding-mentor/
 ├── client/
 │   ├── index.html
 │   ├── style.css
+│   ├── assets/
 │   └── js/
 │       ├── main.js
 │       ├── editor.js
@@ -63,6 +71,11 @@ ai-coding-mentor/
 │   └── .env.example
 └── package.json
 ```
-=======
-# AI-Coding-Mentor
->>>>>>> 060613533c2b01bc22abce7344596fc5cd6be530
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `GROQ_API_KEY` | Your Groq API key | required |
+| `PORT` | Server port | `3000` |
+
