@@ -1,5 +1,5 @@
 // API module — server communication with streaming support
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'https://ai-coding-mentor-pmvx.onrender.com';
 
 export async function analyzeCode(code, language, action, targetLanguage, onChunk) {
     const response = await fetch(`${API_BASE_URL}/analyze`, {

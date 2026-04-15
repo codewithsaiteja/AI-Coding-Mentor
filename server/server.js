@@ -119,19 +119,19 @@ app.post('/analyze', async (req, res) => {
 });
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
     res.json({ status: 'ok', message: 'AI Coding Mentor server is running' });
 });
 
 // Catch-all: serve index.html for any unmatched route (SPA support)
-app.get('*', (req, res) => {
+app.get('*', (_req, res) => {
     res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-    console.log(`Health check: http://localhost:${PORT}/health`);
+    console.log(`Server running at https://ai-coding-mentor-pmvx.onrender.com`);
+    console.log(`Health check: https://ai-coding-mentor-pmvx.onrender.com/health`);
     if (!process.env.GROQ_API_KEY) {
         console.warn('WARNING: GROQ_API_KEY is not set. Set it in server/.env');
     }
