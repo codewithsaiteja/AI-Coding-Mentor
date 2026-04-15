@@ -1,4 +1,4 @@
-import { initializeEditor, detectLanguage, detectLevel } from './editor.js';
+import { initializeEditor, detectLanguage, detectLevel, SUPPORTED_LANGS } from './editor.js';
 import { initializeUI } from './ui.js';
 import { analyzeCode } from './api.js';
 
@@ -47,10 +47,13 @@ function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('ai_mentor_theme', theme);
     const icon = document.getElementById('themeIcon');
+    const logoImg = document.querySelector('.logo-img');
     if (theme === 'light') {
         icon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>';
+        if (logoImg) logoImg.src = 'assets/logo-horizontal-light.svg';
     } else {
         icon.innerHTML = '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>';
+        if (logoImg) logoImg.src = 'assets/logo-horizontal.svg';
     }
     if (_editorRef) _editorRef.setEditorTheme(theme);
 }
@@ -84,10 +87,19 @@ async function init() {
     const convertGoBtn   = document.getElementById('convertGoBtn');
     const loadingText    = document.getElementById('loadingText');
 
-    // ── Restore persisted language ────────────────────────
-    const savedLang = editor.getSavedLanguage();
-    languageSelect.value  = savedLang;
-    langBadge.textContent = langLabel(savedLang);
+    // ── Sync dropdown + badge to a language value ─────────
+    function applyLang(lang) {
+        const safe = SUPPORTED_LANGS.has(lang) ? lang : 'javascript';
+        languageSelect.value  = safe;
+        langBadge.textContent = langLabel(safe);
+        editor.setLanguage(safe);
+        console.log('Dropdown:', safe);
+    }
+
+    // ── Restore language — use detected lang from actual code ─
+    const initialLang = editor.getInitialLang();
+    applyLang(initialLang);
+    console.log('Dropdown:', initialLang);
 
     // ── Override flags ────────────────────────────────────
     let langOverride  = false;
@@ -98,6 +110,7 @@ async function init() {
         const lang = languageSelect.value;
         langBadge.textContent = langLabel(lang);
         editor.setLanguage(lang);
+        console.log('Dropdown:', lang, '(manual override)');
         syncActionButtons();
     });
 
@@ -115,27 +128,36 @@ async function init() {
     syncActionButtons();
     setStatus('', 'Ready');
 
-    // ── Auto-detect on keyup ──────────────────────────────
+    // ── Auto-detect on content change (Monaco native event) ──
     let _detectTimer = null;
-    document.getElementById('monaco-editor').addEventListener('keyup', () => {
+    let _lastDetected = initialLang;
+
+    editor.onChange((code) => {
         clearTimeout(_detectTimer);
         _detectTimer = setTimeout(() => {
-            const code = editor.getValue();
             syncActionButtons();
             if (!code.trim()) return;
 
+            const detected = detectLanguage(code);
+            console.log('Detected:', detected);
+
+            // Auto-reset override when the detected language clearly changed
+            // (e.g. user pasted completely different code)
+            if (langOverride && detected !== 'plaintext' && detected !== _lastDetected) {
+                langOverride = false;
+            }
+
             if (!langOverride) {
-                const detected = detectLanguage(code);
-                if (detected && detected !== languageSelect.value) {
-                    languageSelect.value  = detected;
-                    langBadge.textContent = langLabel(detected);
-                    editor.setLanguage(detected);
+                _lastDetected = detected;
+                if (detected !== languageSelect.value) {
+                    applyLang(detected);
                 }
             }
+
             if (!levelOverride) {
                 levelSelect.value = detectLevel(code);
             }
-        }, 600);
+        }, 300);
     });
 
     // ── Run action ────────────────────────────────────────
@@ -147,7 +169,7 @@ async function init() {
         if (_running) return;
 
         const code     = editor.getValue();
-        const language = languageSelect.value;
+        const language = editor.getLanguage(); // single source of truth
 
         if (!code.trim()) {
             ui.showError('Please enter some code to analyze.');
@@ -249,9 +271,9 @@ async function init() {
     document.getElementById('clearBtn').addEventListener('click', () => {
         langOverride  = false;
         levelOverride = false;
-        languageSelect.value  = DEFAULT_LANG;
-        levelSelect.value     = DEFAULT_LEVEL;
-        langBadge.textContent = langLabel(DEFAULT_LANG);
+        _lastDetected = DEFAULT_LANG;
+        levelSelect.value = DEFAULT_LEVEL;
+        applyLang(DEFAULT_LANG);
         editor.clear(DEFAULT_LANG);
         ui.clearOutput();
         actionBadge.classList.remove('show');
