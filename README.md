@@ -1,6 +1,6 @@
-# AI Coding Mentor
+# CodeSmart
 
-An interactive web-based coding mentor powered by Groq AI that provides real-time code analysis, explanations, and improvements.
+AI-Powered Code Analysis and Optimization Tool that analyzes code, detects issues, and provides improvements.
 
 ## Features
 
@@ -55,7 +55,7 @@ An interactive web-based coding mentor powered by Groq AI that provides real-tim
 ## Project Structure
 
 ```
-ai-coding-mentor/
+codesmart/
 ├── client/
 │   ├── index.html
 │   ├── style.css

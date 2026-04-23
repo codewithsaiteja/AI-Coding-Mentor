@@ -1,5 +1,202 @@
 // UI module — output rendering, state management, streaming
-import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
+
+// Language → file extension map
+const LANG_EXT = {
+    javascript:  'js',
+    typescript:  'ts',
+    python:      'py',
+    java:        'java',
+    cpp:         'cpp',
+    c:           'c',
+    go:          'go',
+    rust:        'rs',
+    bash:        'sh',
+    html:        'html',
+    css:         'css',
+};
+
+// Sections that get a code block treatment
+const CODE_SECTION = 'Improved Code';
+
+// All known section labels in display order
+const SECTION_LABELS = [
+    'Summary',
+    'Issues',
+    'Improved Code',
+    'Complexity',
+    'Suggestions',
+];
+
+/**
+ * Strip markdown code fences and any leading/trailing whitespace from code.
+ */
+function cleanCode(raw) {
+    if (!raw) return '';
+    let cleaned = raw.replace(/^```[\w]*\n?/gm, '');
+    cleaned = cleaned.replace(/```\s*$/gm, '');
+    // Also strip any stray markdown bold/italic/heading symbols
+    cleaned = cleaned.replace(/^#{1,6}\s+/gm, '');
+    cleaned = cleaned.replace(/\*\*(.+?)\*\*/g, '$1');
+    cleaned = cleaned.replace(/\*(.+?)\*/g, '$1');
+    return cleaned.trim();
+}
+
+/**
+ * Strip all markdown symbols from plain text (for explanation sections).
+ */
+function stripMarkdown(text) {
+    if (!text) return '';
+    return text
+        .replace(/^#{1,6}\s+/gm, '')          // headings
+        .replace(/\*\*(.+?)\*\*/g, '$1')       // bold
+        .replace(/\*(.+?)\*/g, '$1')           // italic
+        .replace(/`{1,3}[\w]*\n?/g, '')        // code fences / inline code
+        .replace(/`/g, '')
+        .trim();
+}
+
+/**
+ * Try to parse the streamed buffer as JSON.
+ * Returns { explanation, code, language } or null if not yet valid JSON.
+ */
+function tryParseStructured(raw) {
+    const trimmed = raw.trim();
+    const start = trimmed.indexOf('{');
+    const end   = trimmed.lastIndexOf('}');
+    if (start === -1 || end === -1 || end <= start) return null;
+    try {
+        return JSON.parse(trimmed.slice(start, end + 1));
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Fallback: if the AI returned plain text instead of JSON,
+ * wrap it into the expected shape so the section parser still works.
+ */
+function forceStructured(raw, language) {
+    // Already valid JSON — return as-is
+    const parsed = tryParseStructured(raw);
+    if (parsed) return parsed;
+
+    // Plain text fallback — treat the whole thing as the explanation
+    return { explanation: raw, code: '', language: language || 'plaintext' };
+}
+
+/**
+ * Parse the plain-text structured explanation into sections.
+ * Returns Map<sectionLabel, content[]>
+ */
+function parseSections(text) {
+    const sections = new Map();
+    let currentLabel = null;
+    let currentLines = [];
+
+    const lines = text.split('\n');
+
+    for (const raw of lines) {
+        const line = raw.trimEnd();
+
+        // Check if this line is a section header (e.g. "Summary:" or "Improved Code:")
+        const matchedLabel = SECTION_LABELS.find(
+            lbl => line.trim() === lbl + ':' || line.trim() === lbl
+        );
+
+        if (matchedLabel) {
+            if (currentLabel !== null) {
+                sections.set(currentLabel, currentLines);
+            }
+            currentLabel = matchedLabel;
+            currentLines = [];
+        } else if (currentLabel !== null) {
+            currentLines.push(line);
+        }
+    }
+
+    if (currentLabel !== null) {
+        sections.set(currentLabel, currentLines);
+    }
+
+    return sections;
+}
+
+function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+/**
+ * Build the HTML for the structured output.
+ * Each section gets a labelled block. Code section gets a <pre>.
+ */
+function buildStructuredHTML(explanation, code, language, outputMode) {
+    let html = '';
+
+    if (outputMode === 'explanation' || outputMode === 'both') {
+        const sections = parseSections(stripMarkdown(explanation || ''));
+
+        for (const label of SECTION_LABELS) {
+            if (!sections.has(label)) continue;
+            const lines = sections.get(label);
+            const body  = lines.join('\n').trim();
+            if (!body) continue;
+
+            if (label === CODE_SECTION) {
+                // Render inline improved code from explanation field
+                const cleanedCode = cleanCode(body);
+                html += `
+                    <div class="output-section">
+                        <div class="output-section__label">${escapeHtml(label)}</div>
+                        <div class="output-section__code-wrap">
+                            <button class="copy-code-btn" data-copy="${escapeHtml(cleanedCode)}">Copy</button>
+                            <pre class="output-code"><code>${escapeHtml(cleanedCode)}</code></pre>
+                        </div>
+                    </div>`;
+            } else {
+                // Render as plain text, bullet lines get bullet styling
+                const linesHtml = lines
+                    .filter(l => l.trim())
+                    .map(l => {
+                        const stripped = stripMarkdown(l.trim());
+                        if (stripped.startsWith('- ')) {
+                            return `<div class="output-bullet">${escapeHtml(stripped.slice(2))}</div>`;
+                        }
+                        return `<div class="output-line">${escapeHtml(stripped)}</div>`;
+                    })
+                    .join('');
+
+                html += `
+                    <div class="output-section">
+                        <div class="output-section__label">${escapeHtml(label)}</div>
+                        <div class="output-section__body">${linesHtml}</div>
+                    </div>`;
+            }
+        }
+
+        // Fallback: if no sections were parsed, render as plain text
+        if (html === '' && explanation) {
+            html = `<div class="output-section"><div class="output-section__body">${escapeHtml(stripMarkdown(explanation))}</div></div>`;
+        }
+    }
+
+    if (outputMode === 'code' || outputMode === 'both') {
+        if (code) {
+            const cleanedCode = cleanCode(code);
+            html += `
+                <div class="output-section">
+                    <div class="output-section__label">Code</div>
+                    <div class="output-section__code-wrap">
+                        <button class="copy-code-btn" data-copy="${escapeHtml(cleanedCode)}">Copy</button>
+                        <pre class="output-code"><code>${escapeHtml(cleanedCode)}</code></pre>
+                    </div>
+                </div>`;
+        }
+    }
+
+    return html;
+}
 
 export function initializeUI() {
     const output      = document.getElementById('output');
@@ -8,10 +205,9 @@ export function initializeUI() {
     const copyBtn     = document.getElementById('copyBtn');
     const saveBtn     = document.getElementById('saveBtn');
 
-    // Single source of truth — updated on every stream chunk
-    let latestResult = '';
-
-    marked.setOptions({ breaks: true, gfm: true });
+    // Internal state
+    let rawBuffer    = '';
+    let parsedResult = null;
 
     // ── Helpers ───────────────────────────────────────────
     function setResultButtons(on) {
@@ -19,65 +215,76 @@ export function initializeUI() {
         saveBtn.disabled = !on;
     }
 
-    function addCopyButtons() {
-        output.querySelectorAll('pre').forEach(pre => {
-            if (pre.querySelector('.copy-code-btn')) return;
-            const btn = document.createElement('button');
-            btn.className   = 'copy-code-btn';
-            btn.textContent = 'Copy';
+    function attachCopyButtons() {
+        output.querySelectorAll('.copy-code-btn[data-copy]').forEach(btn => {
+            if (btn.dataset.bound) return;
+            btn.dataset.bound = '1';
             btn.addEventListener('click', () => {
-                const text = pre.querySelector('code')?.innerText ?? pre.innerText;
-                navigator.clipboard.writeText(text).then(() => {
+                navigator.clipboard.writeText(btn.dataset.copy).then(() => {
                     btn.textContent = 'Copied!';
                     setTimeout(() => (btn.textContent = 'Copy'), 2000);
                 });
             });
-            pre.appendChild(btn);
         });
     }
 
-    function render() {
-        try {
-            output.innerHTML = marked.parse(latestResult);
-            addCopyButtons();
-            if (window.Prism) Prism.highlightAllUnder(output);
-        } catch {
-            output.textContent = latestResult;
-        }
-        // Auto-scroll to bottom
+    function renderParsed(parsed) {
+        const { explanation, code, language } = parsed;
+        output.innerHTML = buildStructuredHTML(explanation, code, language, currentOutputMode);
+        attachCopyButtons();
         const rc = output.closest('.response-container');
         if (rc) rc.scrollTop = rc.scrollHeight;
     }
 
-    function escapeHtml(str) {
-        const d = document.createElement('div');
-        d.textContent = str;
-        return d.innerHTML;
-    }
+    // Current output mode — updated by main.js via setOutputMode()
+    let currentOutputMode = 'explanation';
 
-    // Init state
     setResultButtons(false);
 
     // ── Public API ────────────────────────────────────────
     return {
+        setOutputMode(mode) {
+            currentOutputMode = mode;
+            // Re-render if we already have a result
+            if (parsedResult) renderParsed(parsedResult);
+        },
+
         showLoading() {
-            latestResult = '';
+            rawBuffer    = '';
+            parsedResult = null;
             setResultButtons(false);
             output.innerHTML = '';
             introPanel.classList.add('hidden');
             loading.classList.remove('hidden');
         },
 
-        updateStream(chunk) {
+        updateStream(buffer, isDone = false) {
             loading.classList.add('hidden');
-            latestResult += chunk;
-            render();
-            if (latestResult.trim()) setResultButtons(true);
+            rawBuffer = buffer;
+
+            // Try to parse JSON while streaming
+            const parsed = tryParseStructured(buffer);
+            if (parsed) {
+                parsedResult = parsed;
+                renderParsed(parsed);
+                setResultButtons(true);
+            } else if (isDone) {
+                // Stream finished but no valid JSON — use fallback
+                parsedResult = forceStructured(buffer, 'plaintext');
+                renderParsed(parsedResult);
+                setResultButtons(true);
+            } else {
+                // Still streaming — show a minimal progress indicator
+                output.innerHTML = `<div class="stream-progress">Receiving response...</div>`;
+                const rc = output.closest('.response-container');
+                if (rc) rc.scrollTop = rc.scrollHeight;
+            }
         },
 
         showError(message) {
             loading.classList.add('hidden');
-            latestResult = '';
+            rawBuffer    = '';
+            parsedResult = null;
             setResultButtons(false);
             output.innerHTML = `
                 <div class="error-card">
@@ -92,14 +299,58 @@ export function initializeUI() {
         },
 
         clearOutput() {
-            latestResult = '';
+            rawBuffer    = '';
+            parsedResult = null;
             setResultButtons(false);
             output.innerHTML = '';
             loading.classList.add('hidden');
             introPanel.classList.remove('hidden');
         },
 
-        // Used exclusively by Copy and Save
-        getLatestResult: () => latestResult,
+        getLatestResult() {
+            if (!parsedResult) return rawBuffer;
+            const mode = currentOutputMode;
+            if (mode === 'explanation') return stripMarkdown(parsedResult.explanation || '');
+            if (mode === 'code')        return cleanCode(parsedResult.code || '');
+            return stripMarkdown(parsedResult.explanation || '') + '\n\n' + cleanCode(parsedResult.code || '');
+        },
+
+        getSaveFiles() {
+            if (!parsedResult) {
+                return [{ content: rawBuffer, filename: 'codesmart_output.txt', mimeType: 'text/plain' }];
+            }
+
+            const { explanation, code, language } = parsedResult;
+            const ext  = LANG_EXT[language] || 'txt';
+            const mode = currentOutputMode;
+            const files = [];
+
+            if (mode === 'explanation') {
+                files.push({
+                    content:  stripMarkdown(explanation || ''),
+                    filename: 'codesmart_output.md',
+                    mimeType: 'text/plain',
+                });
+            } else if (mode === 'code') {
+                files.push({
+                    content:  cleanCode(code || ''),
+                    filename: `codesmart_output.${ext}`,
+                    mimeType: 'text/plain',
+                });
+            } else {
+                files.push({
+                    content:  stripMarkdown(explanation || ''),
+                    filename: 'codesmart_explanation.md',
+                    mimeType: 'text/plain',
+                });
+                files.push({
+                    content:  cleanCode(code || ''),
+                    filename: `codesmart_code.${ext}`,
+                    mimeType: 'text/plain',
+                });
+            }
+
+            return files;
+        },
     };
 }

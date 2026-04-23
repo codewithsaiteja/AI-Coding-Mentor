@@ -118,25 +118,28 @@ body {
 }
 .logo:hover { filter: drop-shadow(0 0 12px rgba(88,166,255,0.5)); }
 
-/* Full horizontal logo image — natural aspect ratio, fixed height */
-.logo-img {
-    height: 38px;
-    width: auto;
-    object-fit: contain;
-    object-position: left center;
-    display: block;
+/* CodeSmart text logo */
+.logo-text-block {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
 }
 
-/* SVG fallback — same height */
-.logo-fallback {
-    height: 38px;
-    align-items: center;
+.logo-title {
+    font-family: var(--font-brand);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.3px;
 }
 
-/* Remove old square icon + text rules */
-.logo-icon         { display: none; }
-.logo-icon-fallback{ display: none; }
-.logo-text         { display: none; }
+.logo-subtitle {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--text-dim);
+    letter-spacing: 0.1px;
+}
 
 .top-controls {
     display: flex;
@@ -467,17 +470,35 @@ body {
 .intro-panel.hidden { display: none; }
 
 .intro-logo-img {
-    width: auto;
-    max-width: 280px;
-    height: 80px;
-    object-fit: contain;
-    object-position: center;
+    display: none;
 }
 
 .intro-logo-fallback {
+    display: none;
+}
+
+.intro-brand {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    gap: 4px;
+}
+
+.intro-brand-title {
+    font-family: var(--font-brand);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    line-height: 1;
+}
+
+.intro-brand-subtitle {
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: 400;
+    color: var(--text-dim);
+    letter-spacing: 0.1px;
 }
 
 .intro-title {
@@ -807,4 +828,101 @@ body {
     .action-button { flex: 1 1 calc(50% - var(--sp-1)); }
     .btn-icon      { display: none; }
     .panel-btn-icon { display: none; }
+}
+
+/* ── Output Mode Selector ────────────────────────────────── */
+.output-mode-select {
+    height: 28px;
+    font-size: var(--text-sm);
+    padding: 0 var(--sp-2);
+    border-color: var(--border-hi);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* ════════════════════════════════════════════════════════════
+   STRUCTURED OUTPUT SECTIONS
+   ════════════════════════════════════════════════════════════ */
+
+.output-section {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: var(--sp-3);
+    overflow: hidden;
+}
+
+.output-section__label {
+    background: var(--bg-raised);
+    border-bottom: 1px solid var(--border);
+    padding: var(--sp-2) var(--sp-4);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-family: var(--font-ui);
+}
+
+.output-section__body {
+    padding: var(--sp-3) var(--sp-4);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.output-line {
+    font-size: var(--text-base);
+    color: var(--text);
+    line-height: 1.6;
+    font-family: var(--font-ui);
+}
+
+.output-bullet {
+    font-size: var(--text-base);
+    color: var(--text);
+    line-height: 1.6;
+    font-family: var(--font-ui);
+    padding-left: var(--sp-4);
+    position: relative;
+}
+
+.output-bullet::before {
+    content: '-';
+    position: absolute;
+    left: var(--sp-2);
+    color: var(--text-dim);
+}
+
+.output-section__code-wrap {
+    position: relative;
+}
+
+.output-code {
+    margin: 0;
+    padding: var(--sp-4);
+    background: var(--bg-input);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: 1.65;
+    color: var(--text);
+    overflow-x: auto;
+    white-space: pre;
+    border: none;
+    border-radius: 0;
+}
+
+.output-code code {
+    background: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+}
+
+/* ── Stream progress indicator ───────────────────────────── */
+.stream-progress {
+    color: var(--text-dim);
+    font-size: var(--text-sm);
+    font-style: italic;
+    padding: var(--sp-4);
 }

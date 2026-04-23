@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Coding Mentor</title>
+    <title>CodeSmart</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
     <link rel="apple-touch-icon" href="assets/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,8 +20,11 @@
 
     <!-- ── Top Bar ─────────────────────────────────────── -->
     <header class="top-bar">
-        <a href="/" class="logo" title="AI Coding Mentor Home">
-            <img src="assets/logo-horizontal.svg" alt="AI Coding Mentor" class="logo-img">
+        <a href="/" class="logo" title="CodeSmart Home">
+            <div class="logo-text-block">
+                <span class="logo-title">CodeSmart</span>
+                <span class="logo-subtitle">AI-Powered Code Analysis and Optimization Tool</span>
+            </div>
         </a>
 
         <div class="top-controls">
@@ -83,7 +86,12 @@
                     <span class="badge-action" id="actionBadge"></span>
                 </div>
                 <div class="panel-buttons">
-                    <button class="panel-btn" id="saveBtn" disabled title="Save output as Markdown">
+                    <select id="outputModeSelect" class="dropdown output-mode-select" title="Output mode">
+                        <option value="explanation">Explanation</option>
+                        <option value="code">Code</option>
+                        <option value="both">Both</option>
+                    </select>
+                    <button class="panel-btn" id="saveBtn" disabled title="Save output to file">
                         <svg class="panel-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7M7 3v4a1 1 0 0 0 1 1h7"/></svg>
                         Save
                     </button>
@@ -96,7 +104,10 @@
             <div class="response-container">
                 <!-- Intro splash -->
                 <div id="introPanel" class="intro-panel">
-                    <img src="assets/logo-vertical.svg" alt="AI Coding Mentor" class="intro-logo-img">
+                    <div class="intro-brand">
+                        <span class="intro-brand-title">CodeSmart</span>
+                        <span class="intro-brand-subtitle">AI-Powered Code Analysis and Optimization Tool</span>
+                    </div>
                     <p class="intro-desc">Write or paste code in the editor, then pick an action to get instant AI-powered feedback.</p>
                     <div class="intro-hints">
                         <div class="intro-hint">

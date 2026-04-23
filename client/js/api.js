@@ -1,11 +1,12 @@
 // API module — server communication with streaming support
-const API_BASE_URL = 'https://ai-coding-mentor-pmvx.onrender.com';
+// Use relative URL so it always hits the same server serving this page
+const API_BASE_URL = '';
 
-export async function analyzeCode(code, language, action, targetLanguage, onChunk) {
+export async function analyzeCode(code, language, action, targetLanguage, onChunk, outputMode = 'explanation') {
     const response = await fetch(`${API_BASE_URL}/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, language, action, targetLanguage }),
+        body: JSON.stringify({ code, language, action, targetLanguage, outputMode }),
     });
 
     if (!response.ok) {
@@ -21,11 +22,18 @@ export async function analyzeCode(code, language, action, targetLanguage, onChun
 
     const reader  = response.body.getReader();
     const decoder = new TextDecoder();
+    let   buffer  = '';
 
     while (true) {
         const { value, done } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        if (chunk && onChunk) onChunk(chunk);
+        if (done) {
+            // Final call with isDone=true so UI can apply fallback if needed
+            if (onChunk) onChunk(buffer, true);
+            break;
+        }
+        buffer += decoder.decode(value, { stream: true });
+        if (onChunk) onChunk(buffer, false);
     }
+
+    return buffer;
 }

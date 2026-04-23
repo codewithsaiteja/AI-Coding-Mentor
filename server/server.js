@@ -49,7 +49,7 @@ const actionPrompts = {
 // Main analyze endpoint (Streaming)
 app.post('/analyze', async (req, res) => {
     try {
-        const { code, language, action } = req.body;
+        const { code, language, action, outputMode } = req.body;
 
         // Validation
         if (!code || !language || !action) {
@@ -65,9 +65,61 @@ app.post('/analyze', async (req, res) => {
         }
 
         // Generate prompt based on action
-        const prompt = action === 'convert'
+        const basePrompt = action === 'convert'
             ? actionPrompts.convert(code, language, req.body.targetLanguage || 'python')
             : actionPrompts[action](code, language);
+
+        // Build structured prompt based on outputMode
+        const mode = outputMode || 'explanation';
+        const targetLang = action === 'convert' ? (req.body.targetLanguage || 'python') : language;
+
+        const SECTION_FORMAT = `
+Respond using ONLY these exact sections in this exact order. No other text.
+
+Summary:
+[1-2 sentences about what the code does]
+
+Issues:
+- [issue 1]
+- [issue 2]
+(write "- None found" if no issues)
+
+Improved Code:
+[paste only raw runnable code here — no backticks, no fences, no language label]
+
+Complexity:
+Time: O(?) — brief reason
+Space: O(?) — brief reason
+
+Suggestions:
+- [suggestion 1]
+- [suggestion 2]
+`;
+
+        let userContent;
+
+        if (mode === 'code') {
+            userContent = `${basePrompt}
+
+Return ONLY a JSON object, nothing else before or after it:
+{"explanation":"","code":"PURE_CODE_HERE","language":"${targetLang}"}
+
+Replace PURE_CODE_HERE with the raw runnable code. No backticks. No markdown. No fences. Use \\n for newlines inside the JSON string.`;
+        } else {
+            userContent = `${basePrompt}
+
+${SECTION_FORMAT}
+
+Now wrap your entire response above into this JSON object. Return ONLY the JSON, nothing else:
+{"explanation":"RESPONSE_HERE","code":"${mode === 'both' ? 'PURE_CODE_HERE' : ''}","language":"${targetLang}"}
+
+Rules for the JSON:
+- Replace RESPONSE_HERE with your full structured response (Summary through Suggestions)
+- Use \\n for newlines inside JSON strings
+- No backticks or markdown inside the explanation string
+- No text before or after the JSON object
+${mode === 'both' ? '- Replace PURE_CODE_HERE with the improved raw runnable code (no backticks, no fences)' : ''}`;
+        }
 
         // Set headers for streaming
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -78,15 +130,15 @@ app.post('/analyze', async (req, res) => {
             messages: [
                 {
                     role: 'system',
-                    content: 'You are an expert coding mentor. Provide clear, helpful, and accurate feedback on code. Respond in a clean, professional, and structured documentation style format. Use markdown headings (e.g., ### Complexity Analysis), bullet points, and code blocks for formatting. NEVER use emojis or icons.'
+                    content: 'You are a code analysis assistant for CodeSmart. You MUST always respond with a single valid JSON object and nothing else — no text before it, no text after it, no markdown code fences wrapping it. The JSON must have exactly three keys: "explanation", "code", and "language". Use \\n for newlines inside string values. Never use markdown symbols (###, **, *, backticks) inside the explanation string.'
                 },
                 {
                     role: 'user',
-                    content: prompt
+                    content: userContent
                 }
             ],
             model: 'llama-3.3-70b-versatile',
-            temperature: 0.5,
+            temperature: 0.3,
             max_tokens: 3000,
             stream: true
         });
@@ -120,7 +172,7 @@ app.post('/analyze', async (req, res) => {
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
-    res.json({ status: 'ok', message: 'AI Coding Mentor server is running' });
+    res.json({ status: 'ok', app: 'CodeSmart', message: 'CodeSmart server is running' });
 });
 
 // Catch-all: serve index.html for any unmatched route (SPA support)
@@ -130,7 +182,7 @@ app.get('*', (_req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server running at https://ai-coding-mentor-pmvx.onrender.com`);
+    console.log(`CodeSmart server running at https://ai-coding-mentor-pmvx.onrender.com`);
     console.log(`Health check: https://ai-coding-mentor-pmvx.onrender.com/health`);
     if (!process.env.GROQ_API_KEY) {
         console.warn('WARNING: GROQ_API_KEY is not set. Set it in server/.env');

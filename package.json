@@ -1,13 +1,13 @@
 {
-  "name": "ai-coding-mentor",
+  "name": "codesmart",
   "version": "1.0.0",
-  "description": "AI-powered coding mentor with real-time code analysis",
+  "description": "AI-Powered Code Analysis and Optimization Tool that analyzes code, detects issues, and provides improvements.",
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
     "dev": "nodemon server/server.js"
   },
-  "keywords": ["ai", "coding", "mentor", "groq"],
+  "keywords": ["ai", "codesmart", "code-analysis", "groq"],
   "author": "",
   "license": "MIT",
   "dependencies": {

@@ -47,13 +47,10 @@ function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('ai_mentor_theme', theme);
     const icon = document.getElementById('themeIcon');
-    const logoImg = document.querySelector('.logo-img');
     if (theme === 'light') {
         icon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>';
-        if (logoImg) logoImg.src = 'assets/logo-horizontal-light.svg';
     } else {
         icon.innerHTML = '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>';
-        if (logoImg) logoImg.src = 'assets/logo-horizontal.svg';
     }
     if (_editorRef) _editorRef.setEditorTheme(theme);
 }
@@ -86,6 +83,7 @@ async function init() {
     const convertPopup   = document.getElementById('convertPopup');
     const convertGoBtn   = document.getElementById('convertGoBtn');
     const loadingText    = document.getElementById('loadingText');
+    const outputModeSelect = document.getElementById('outputModeSelect');
 
     // ── Sync dropdown + badge to a language value ─────────
     function applyLang(lang) {
@@ -127,6 +125,19 @@ async function init() {
 
     syncActionButtons();
     setStatus('', 'Ready');
+
+    // ── Output mode ───────────────────────────────────────
+    function getOutputMode() {
+        return outputModeSelect ? outputModeSelect.value : 'explanation';
+    }
+
+    if (outputModeSelect) {
+        outputModeSelect.addEventListener('change', () => {
+            ui.setOutputMode(getOutputMode());
+        });
+    }
+    // Set initial mode
+    ui.setOutputMode(getOutputMode());
 
     // ── Auto-detect on content change (Monaco native event) ──
     let _detectTimer = null;
@@ -202,7 +213,7 @@ async function init() {
         ui.showLoading();
 
         try {
-            await analyzeCode(code, language, action, targetLang, chunk => ui.updateStream(chunk));
+            await analyzeCode(code, language, action, targetLang, (chunk, isDone) => ui.updateStream(chunk, isDone), getOutputMode());
             setStatus('done', `${actionName} complete`);
         } catch (err) {
             ui.showError(err.message || 'An unexpected error occurred.');
@@ -297,13 +308,16 @@ async function init() {
 
     // ── Save ──────────────────────────────────────────────
     document.getElementById('saveBtn').addEventListener('click', () => {
-        const text = ui.getLatestResult();
-        if (!text) return;
-        const blob = new Blob([text], { type: 'text/markdown' });
-        const url  = URL.createObjectURL(blob);
-        const a    = Object.assign(document.createElement('a'), { href: url, download: 'ai-analysis.md' });
-        a.click();
-        URL.revokeObjectURL(url);
+        const files = ui.getSaveFiles();
+        if (!files || files.length === 0) return;
+        files.forEach(({ content, filename, mimeType }) => {
+            if (!content) return;
+            const blob = new Blob([content], { type: mimeType });
+            const url  = URL.createObjectURL(blob);
+            const a    = Object.assign(document.createElement('a'), { href: url, download: filename });
+            a.click();
+            URL.revokeObjectURL(url);
+        });
     });
 
     // ── Load Sample ───────────────────────────────────────
