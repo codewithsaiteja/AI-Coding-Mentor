@@ -16,15 +16,14 @@ const LANG_EXT = {
 };
 
 // Sections that get a code block treatment
-const CODE_SECTION = 'Improved Code';
+const CODE_SECTION = 'Fixed Code';
 
 // All known section labels in display order
 const SECTION_LABELS = [
-    'Summary',
-    'Issues',
-    'Improved Code',
-    'Complexity',
-    'Suggestions',
+    'Issue',
+    'Why',
+    'Fixed Code',
+    'Better Design',
 ];
 
 /**

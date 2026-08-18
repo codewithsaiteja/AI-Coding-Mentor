@@ -19,6 +19,39 @@ app.use(express.json());
 // Serve static files from client directory
 app.use(express.static(path.join(__dirname, '../client')));
 
+// CodeSmart system prompt — strict code reviewer persona
+const SYSTEM_PROMPT = `You are CodeSmart, a strict code reviewer.
+
+TASK: Given user code, return a precise technical review and a corrected version.
+
+You MUST always respond with a single valid JSON object and nothing else.
+No text before it. No text after it. No markdown code fences wrapping the JSON.
+The JSON must have exactly three keys: "explanation", "code", and "language".
+Use \\n for newlines inside string values.
+
+Inside the "explanation" value, use ONLY this exact format — no other text, no deviations:
+
+Issue:
+[1-2 lines explaining the root problem]
+
+Why:
+[1-2 lines explaining why it is incorrect]
+
+Fixed Code:
+[ONLY clean runnable code here — no markdown, no backticks, no fences, no explanation]
+
+Better Design:
+- [short bullet point]
+- [short bullet point]
+
+STRICT RULES for the explanation field:
+- Do NOT use markdown symbols (no ###, no backticks, no **, no *)
+- Do NOT mix explanation with code
+- Do NOT write long paragraphs
+- Section labels must appear exactly as shown (Issue:, Why:, Fixed Code:, Better Design:)
+- If unsure about anything, write: Uncertain — requires verification
+- Do not hallucinate APIs or libraries`;
+
 // Action prompts for different AI operations
 const actionPrompts = {
     explain: (code, language) => 
@@ -76,24 +109,18 @@ app.post('/analyze', async (req, res) => {
         const SECTION_FORMAT = `
 Respond using ONLY these exact sections in this exact order. No other text.
 
-Summary:
-[1-2 sentences about what the code does]
+Issue:
+[1-2 lines explaining the root problem]
 
-Issues:
-- [issue 1]
-- [issue 2]
-(write "- None found" if no issues)
+Why:
+[1-2 lines explaining why it is incorrect]
 
-Improved Code:
-[paste only raw runnable code here — no backticks, no fences, no language label]
+Fixed Code:
+[paste only raw runnable code here — no backticks, no fences, no language label, no explanation]
 
-Complexity:
-Time: O(?) — brief reason
-Space: O(?) — brief reason
-
-Suggestions:
-- [suggestion 1]
-- [suggestion 2]
+Better Design:
+- [short actionable bullet point]
+- [short actionable bullet point]
 `;
 
         let userContent;
@@ -130,7 +157,7 @@ ${mode === 'both' ? '- Replace PURE_CODE_HERE with the improved raw runnable cod
             messages: [
                 {
                     role: 'system',
-                    content: 'You are a code analysis assistant for CodeSmart. You MUST always respond with a single valid JSON object and nothing else — no text before it, no text after it, no markdown code fences wrapping it. The JSON must have exactly three keys: "explanation", "code", and "language". Use \\n for newlines inside string values. Never use markdown symbols (###, **, *, backticks) inside the explanation string.'
+                    content: SYSTEM_PROMPT
                 },
                 {
                     role: 'user',
